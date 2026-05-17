@@ -1,0 +1,19 @@
+{
+  "name": "endgamer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@lichess-org/chessground": "^10.1.1"
+  },
+  "devDependencies": {
+    "vite": "^6.4.2"
+  }
+}
