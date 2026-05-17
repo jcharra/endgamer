@@ -3,10 +3,15 @@ import '@lichess-org/chessground/assets/chessground.base.css';
 import '@lichess-org/chessground/assets/chessground.brown.css';
 import '@lichess-org/chessground/assets/chessground.cburnett.css';
 
+let humanColor = 'white';
+
+function fenColor(fen) {
+  return fen.split(' ')[1] === 'w' ? 'white' : 'black';
+}
+
 async function fetchPosition() {
   const res = await fetch('http://localhost:8000/position');
-  const data = await res.json();
-  return data.fen;
+  return res.json();
 }
 
 async function fetchDests() {
@@ -40,7 +45,8 @@ function askPromotion() {
 
 async function onMove(from, to) {
   const piece = ground.state.pieces.get(to);
-  const promotion = piece?.role === 'pawn' && to[1] === '8' ? await askPromotion() : '';
+  const promoRank = humanColor === 'white' ? '8' : '1';
+  const promotion = piece?.role === 'pawn' && to[1] === promoRank ? await askPromotion() : '';
   const data = await sendMove(from, to, promotion);
   if (data.error) {
     console.error('illegal move:', data.error);
@@ -62,20 +68,44 @@ async function onMove(from, to) {
   const next = await fetchDests();
   ground.set({
     fen: next.fen,
-    turnColor: 'white',
+    turnColor: humanColor,
     movable: { dests: next.dests, events: { after: onMove } },
     drawable: { autoShapes: [] },
   });
 }
 
-const initialFen = await fetchPosition();
+async function loadPosition(posData = null) {
+  const { fen, task } = posData ?? await fetchPosition();
+  document.getElementById('task').textContent = task ?? '';
+  humanColor = fenColor(fen);
+  const { dests } = await fetchDests();
+  document.getElementById('board').classList.remove('dark');
+  ground.set({
+    fen,
+    orientation: humanColor,
+    turnColor: humanColor,
+    movable: { color: humanColor, free: false, dests, events: { after: onMove } },
+    drawable: { autoShapes: [] },
+  });
+}
+
+document.getElementById('new-btn').addEventListener('click', async () => {
+  const res = await fetch('http://localhost:8000/new');
+  await loadPosition(await res.json());
+});
+
+const { fen: initialFen, task: initialTask } = await fetchPosition();
+document.getElementById('task').textContent = initialTask ?? '';
+humanColor = fenColor(initialFen);
 const { dests } = await fetchDests();
 
 const ground = Chessground(document.getElementById('board'), {
   fen: initialFen,
+  orientation: humanColor,
+  turnColor: humanColor,
   movable: {
     free: false,
-    color: 'white',
+    color: humanColor,
     dests,
     events: { after: onMove },
   },

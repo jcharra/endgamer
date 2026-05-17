@@ -5,16 +5,32 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+from endgameprovider import get_random_endgame
+
 app = Flask(__name__)
 CORS(app)
 
-POSITION_FEN = '4k3/8/8/8/8/8/3PP3/4K3 w - - 0 1'  # K+P vs K
-board = chess.Board(POSITION_FEN)
+POSITION_FEN = get_random_endgame()
+BOARD = chess.Board(POSITION_FEN)
+HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
 
+
+@app.route('/new', methods=['GET'])
+def new():
+    global BOARD, POSITION_FEN, HUMAN_COLOR
+    outcome = -1
+    for _ in range(10):
+        POSITION_FEN = get_random_endgame()
+        outcome = get_outcome(POSITION_FEN)
+        if outcome is not None and outcome >= 0:
+            break
+    BOARD = chess.Board(POSITION_FEN)
+    HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
+    return jsonify({'fen': POSITION_FEN, 'task': position_task(POSITION_FEN, outcome)})
 
 @app.route('/position', methods=['GET'])
 def get_position():
-    board.set_fen(POSITION_FEN)
+    BOARD.set_fen(POSITION_FEN)
     return jsonify({'fen': POSITION_FEN})
 
 
@@ -22,17 +38,41 @@ def get_position():
 def get_dests():
     dests = {}
     seen = set()
-    for move in board.legal_moves:
+    for move in BOARD.legal_moves:
         from_sq = chess.square_name(move.from_square)
         to_sq = chess.square_name(move.to_square)
         if (from_sq, to_sq) not in seen:
             seen.add((from_sq, to_sq))
             dests.setdefault(from_sq, []).append(to_sq)
-    return jsonify({'dests': dests, 'fen': board.fen()})
+    return jsonify({'dests': dests, 'fen': BOARD.fen()})
+
+
+def get_outcome(fen):
+    """Returns 1 (win), 0 (draw), -1 (loss) for the side to move, or None on error."""
+    try:
+        tb = query_tablebase(chess.Board(fen))
+        wdl = tb.get('wdl')
+        dtz = tb.get('dtz')
+        val = wdl if wdl is not None else dtz
+        if val is None:
+            return None
+        return 1 if val > 0 else (0 if val == 0 else -1)
+    except Exception:
+        return None
+
+
+def position_task(fen, outcome=None):
+    if outcome is None:
+        outcome = get_outcome(fen)
+    if outcome is None:
+        return None
+    color = 'White' if fen.split()[1] == 'w' else 'Black'
+    return f'{color} to {"win" if outcome > 0 else "draw"}'
 
 
 def query_tablebase(b):
-    url = 'https://tablebase.lichess.ovh/standard?' + urllib.parse.urlencode({'fen': b.fen()})
+    url = 'https://tablebase.lichess.ovh/standard?' + \
+        urllib.parse.urlencode({'fen': b.fen()})
     req = urllib.request.Request(url, headers={'Accept': 'application/json'})
     with urllib.request.urlopen(req, timeout=5) as resp:
         return json.loads(resp.read())
@@ -44,13 +84,13 @@ def make_move():
     uci = data['from'] + data['to'] + data.get('promotion', '')
     move = chess.Move.from_uci(uci)
 
-    if move not in board.legal_moves:
+    if move not in BOARD.legal_moves:
         return jsonify({'error': 'illegal move'}), 400
 
     best_uci = None
     optimal = True
     try:
-        tb = query_tablebase(board)
+        tb = query_tablebase(BOARD)
         moves = tb.get('moves') or []
         if moves:
             best = moves[0]
@@ -65,20 +105,20 @@ def make_move():
         print(f'Tablebase query error: {e}')
 
     if not optimal:
-        return jsonify({'fen': board.fen(), 'optimal': False, 'best_move': best_uci})
+        return jsonify({'fen': BOARD.fen(), 'optimal': False, 'best_move': best_uci})
 
-    board.push(move)
+    BOARD.push(move)
 
-    if not board.is_game_over() and board.turn == chess.BLACK:
+    if not BOARD.is_game_over() and BOARD.turn != HUMAN_COLOR:
         try:
-            tb_reply = query_tablebase(board)
+            tb_reply = query_tablebase(BOARD)
             reply_moves = tb_reply.get('moves', [])
             if reply_moves:
-                board.push(chess.Move.from_uci(reply_moves[0]['uci']))
+                BOARD.push(chess.Move.from_uci(reply_moves[0]['uci']))
         except Exception as e:
             print(f'Black reply error: {e}')
 
-    return jsonify({'fen': board.fen(), 'optimal': True})
+    return jsonify({'fen': BOARD.fen(), 'optimal': True})
 
 
 app.run(host='0.0.0.0', port=8000)

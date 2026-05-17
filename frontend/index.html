@@ -7,6 +7,14 @@
   <title>Endgamer</title>
   <style>
     #board { transition: filter 0.3s ease; }
+    #task {
+      width: 400px; text-align: center;
+      font: bold 18px sans-serif; padding: 6px 0;
+    }
+    #new-btn {
+      display: block; margin-top: 10px; width: 400px;
+      padding: 8px; font-size: 15px; cursor: pointer;
+    }
     #promotion-dialog {
       display: none;
       position: absolute;
@@ -34,7 +42,9 @@
 
 <body>
   <div id="board-wrap" style="position: relative; display: inline-block;">
+    <div id="task"></div>
     <div id="board" style="width: 400px; height: 400px;"></div>
+    <button id="new-btn">New position</button>
     <div id="promotion-dialog">
       <button data-piece="q">♛</button>
       <button data-piece="r">♜</button>
