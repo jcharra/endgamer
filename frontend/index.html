@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Endgamer</title>
   <style>
+    /* Center the board wrapper in the viewport, both horizontally and vertically */
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
     #board { transition: filter 0.3s ease; }
     #task {
       width: 400px; text-align: center;

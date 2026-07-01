@@ -29,15 +29,26 @@ def random_krb_kr():
 GAMES = []
 
 
+def _is_valid_position(fen):
+    try:
+        board = chess.Board(fen)
+        pieces = board.piece_map().values()
+        only_kings_and_pawns = all(p.piece_type in (chess.KING, chess.PAWN) for p in pieces)
+        return only_kings_and_pawns and len(list(pieces)) <= 5 and not board.is_game_over()
+    except Exception:
+        return False
+
+
 def get_random_endgame():
     global GAMES
     if len(GAMES) == 0:
-        pgn = open("data/endgames.pgn")
-
-        while True:
-            game = chess.pgn.read_game(pgn)
-            if game is None:
-                break
-            GAMES.append(game.headers["FEN"])
+        with open("data/endgames.pgn") as pgn:
+            while True:
+                game = chess.pgn.read_game(pgn)
+                if game is None:
+                    break
+                fen = game.headers["FEN"]
+                if _is_valid_position(fen):
+                    GAMES.append(fen)
     return random.choice(GAMES)
   

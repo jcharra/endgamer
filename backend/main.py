@@ -10,45 +10,16 @@ from endgameprovider import get_random_endgame
 app = Flask(__name__)
 CORS(app)
 
-POSITION_FEN = get_random_endgame()
-BOARD = chess.Board(POSITION_FEN)
-HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
 
-
-@app.route('/new', methods=['GET'])
-def new():
-    global BOARD, POSITION_FEN, HUMAN_COLOR
-    outcome = -1
-    for _ in range(10):
-        POSITION_FEN = get_random_endgame()
-        outcome = get_outcome(POSITION_FEN)
-        if outcome is not None and outcome >= 0:
-            break
-    BOARD = chess.Board(POSITION_FEN)
-    HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
-    return jsonify({'fen': POSITION_FEN, 'task': position_task(POSITION_FEN, outcome)})
-
-@app.route('/position', methods=['GET'])
-def get_position():
-    BOARD.set_fen(POSITION_FEN)
-    return jsonify({'fen': POSITION_FEN})
-
-
-@app.route('/dests', methods=['GET'])
-def get_dests():
-    dests = {}
-    seen = set()
-    for move in BOARD.legal_moves:
-        from_sq = chess.square_name(move.from_square)
-        to_sq = chess.square_name(move.to_square)
-        if (from_sq, to_sq) not in seen:
-            seen.add((from_sq, to_sq))
-            dests.setdefault(from_sq, []).append(to_sq)
-    return jsonify({'dests': dests, 'fen': BOARD.fen()})
+def query_tablebase(b):
+    url = 'https://tablebase.lichess.ovh/standard?' + \
+        urllib.parse.urlencode({'fen': b.fen()})
+    req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        return json.loads(resp.read())
 
 
 def get_outcome(fen):
-    """Returns 1 (win), 0 (draw), -1 (loss) for the side to move, or None on error."""
     try:
         tb = query_tablebase(chess.Board(fen))
         wdl = tb.get('wdl')
@@ -70,12 +41,45 @@ def position_task(fen, outcome=None):
     return f'{color} to {"win" if outcome > 0 else "draw"}'
 
 
-def query_tablebase(b):
-    url = 'https://tablebase.lichess.ovh/standard?' + \
-        urllib.parse.urlencode({'fen': b.fen()})
-    req = urllib.request.Request(url, headers={'Accept': 'application/json'})
-    with urllib.request.urlopen(req, timeout=5) as resp:
-        return json.loads(resp.read())
+POSITION_FEN = get_random_endgame()
+BOARD = chess.Board(POSITION_FEN)
+HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
+POSITION_TASK = position_task(POSITION_FEN)
+
+
+@app.route('/new', methods=['GET'])
+def new():
+    global BOARD, POSITION_FEN, HUMAN_COLOR, POSITION_TASK
+    outcome = -1
+    for _ in range(10):
+        POSITION_FEN = get_random_endgame()
+        outcome = get_outcome(POSITION_FEN)
+        if outcome is not None and outcome >= 0:
+            break
+    BOARD = chess.Board(POSITION_FEN)
+    HUMAN_COLOR = chess.WHITE if POSITION_FEN.split()[1] == 'w' else chess.BLACK
+    POSITION_TASK = position_task(POSITION_FEN, outcome)
+    return jsonify({'fen': POSITION_FEN, 'task': POSITION_TASK})
+
+
+@app.route('/position', methods=['GET'])
+def get_position():
+    BOARD.set_fen(POSITION_FEN)
+    return jsonify({'fen': POSITION_FEN, 'task': POSITION_TASK})
+
+
+@app.route('/dests', methods=['GET'])
+def get_dests():
+    dests = {}
+    seen = set()
+    for move in BOARD.legal_moves:
+        from_sq = chess.square_name(move.from_square)
+        to_sq = chess.square_name(move.to_square)
+        if (from_sq, to_sq) not in seen:
+            seen.add((from_sq, to_sq))
+            dests.setdefault(from_sq, []).append(to_sq)
+    return jsonify({'dests': dests, 'fen': BOARD.fen()})
+
 
 
 @app.route('/move', methods=['POST'])
@@ -121,4 +125,4 @@ def make_move():
     return jsonify({'fen': BOARD.fen(), 'optimal': True})
 
 
-app.run(host='0.0.0.0', port=8000)
+app.run(host='0.0.0.0', port=8001)

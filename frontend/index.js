@@ -10,18 +10,18 @@ function fenColor(fen) {
 }
 
 async function fetchPosition() {
-  const res = await fetch('http://localhost:8000/position');
+  const res = await fetch('http://localhost:8001/position');
   return res.json();
 }
 
 async function fetchDests() {
-  const res = await fetch('http://localhost:8000/dests');
+  const res = await fetch('http://localhost:8001/dests');
   const data = await res.json();
   return { dests: new Map(Object.entries(data.dests)), fen: data.fen };
 }
 
 async function sendMove(from, to, promotion = '') {
-  const res = await fetch('http://localhost:8000/move', {
+  const res = await fetch('http://localhost:8001/move', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to, promotion }),
@@ -90,7 +90,7 @@ async function loadPosition(posData = null) {
 }
 
 document.getElementById('new-btn').addEventListener('click', async () => {
-  const res = await fetch('http://localhost:8000/new');
+  const res = await fetch('http://localhost:8001/new');
   await loadPosition(await res.json());
 });
 
