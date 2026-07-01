@@ -3,11 +3,15 @@ import chess
 import urllib.request
 import urllib.parse
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 
 from auth import auth_bp, oauth, register_google_oauth
-from db import init_db
+from db import adjust_score, init_db
+
+# Score awarded on checkmate vs. deducted on a non-optimal (losing) move.
+CHECKMATE_BONUS = 100
+FAILURE_PENALTY = -10
 from endgameprovider import get_random_endgame
 
 app = Flask(__name__)
@@ -133,9 +137,20 @@ def make_move():
         print(f'Tablebase query error: {e}')
 
     if not optimal:
-        return jsonify({'fen': BOARD.fen(), 'optimal': False, 'best_move': best_uci})
+        response = {'fen': BOARD.fen(), 'optimal': False, 'best_move': best_uci}
+        # Deviating from the ideal path ends the attempt in failure, so a
+        # logged-in player is docked the failure penalty right away.
+        user_id = session.get('user_id')
+        if user_id is not None:
+            response['score'] = adjust_score(user_id, FAILURE_PENALTY)
+        return jsonify(response)
 
     BOARD.push(move)
+
+    # A checkmate always lands on the human's own move: the puzzle only asks
+    # them to win, so the game ends here and the block below (which plays
+    # the opponent's reply) is skipped because is_game_over() is now true.
+    checkmate = BOARD.is_checkmate()
 
     if not BOARD.is_game_over() and BOARD.turn != HUMAN_COLOR:
         try:
@@ -146,7 +161,16 @@ def make_move():
         except Exception as e:
             print(f'Black reply error: {e}')
 
-    return jsonify({'fen': BOARD.fen(), 'optimal': True})
+    response = {'fen': BOARD.fen(), 'optimal': True, 'checkmate': checkmate}
+
+    # Logged-in players earn a bonus per solved endgame; anonymous visitors
+    # can still play but have no account to persist a score against.
+    if checkmate:
+        user_id = session.get('user_id')
+        if user_id is not None:
+            response['score'] = adjust_score(user_id, CHECKMATE_BONUS)
+
+    return jsonify(response)
 
 
 app.run(host='0.0.0.0', port=8001)

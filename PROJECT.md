@@ -21,9 +21,12 @@ Always add meaningful comments to every function.
 Prefer multi line coding to terse coding for readability.
 Do not comment every variable, though.
 
+Documentation
+-------------
+Document all your changes in a file called LOGFILE.
+Give an incremental change number and description.
+
 Current task
 ------------
-None. (Last completed: email/password auth + Google OAuth backed by SQLite, a top nav bar
-showing the logged-in username or "Login", and a modal for sign in/up. Apple sign-in is
-stubbed only -- it needs a paid Apple Developer account and an HTTPS redirect URI, so
-`/auth/apple/login` just returns a "not configured" error for now.)
+None. (Last completed: -10 score penalty on a failed/non-optimal move, and
+raised the checkmate bonus from +1 to +100.)

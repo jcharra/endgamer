@@ -39,10 +39,17 @@ def init_db():
                 password_hash TEXT,
                 name TEXT,
                 google_sub TEXT UNIQUE,
+                score INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             )
             """
         )
+
+        # Databases created before the `score` column existed need it added
+        # explicitly, since CREATE TABLE IF NOT EXISTS above is a no-op for them.
+        existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+        if "score" not in existing_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN score INTEGER NOT NULL DEFAULT 0")
 
 
 def create_user(email, password_hash, name):
@@ -67,6 +74,16 @@ def find_user_by_id(user_id):
     """Return the user row for the given id, or None if no such account exists."""
     with get_connection() as conn:
         return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+
+def adjust_score(user_id, delta):
+    """Apply `delta` (positive or negative) to the given user's score and
+    return their new total. Used both for the checkmate bonus and the
+    deviation penalty.
+    """
+    with get_connection() as conn:
+        conn.execute("UPDATE users SET score = score + ? WHERE id = ?", (delta, user_id))
+    return find_user_by_id(user_id)["score"]
 
 
 def find_or_create_google_user(sub, email, name):

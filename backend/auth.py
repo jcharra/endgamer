@@ -48,7 +48,7 @@ def register_google_oauth():
 
 def _user_to_dict(user):
     """Shape a `users` table row into the JSON representation sent to the frontend."""
-    return {"id": user["id"], "email": user["email"], "name": user["name"]}
+    return {"id": user["id"], "email": user["email"], "name": user["name"], "score": user["score"]}
 
 
 @auth_bp.route("/register", methods=["POST"])

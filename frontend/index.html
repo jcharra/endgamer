@@ -18,23 +18,60 @@
       min-height: 100vh;
       padding-top: 48px;
       box-sizing: border-box;
+      /* Subtle bluish gradient backdrop -- kept light and desaturated so it
+         reads as an elegant surface rather than competing with the board. */
+      background: linear-gradient(160deg, #eef3f9 0%, #dde8f3 45%, #cbdbec 100%);
+      background-attachment: fixed;
     }
-    #board { transition: filter 0.3s ease; }
+    /* The board and the controls beneath it all share the width of
+       #board-wrap, which is sized responsively below: 90% of the viewport
+       on small screens, 30% from the "md" breakpoint (768px) upward. */
+    #board-wrap {
+      width: 90vw;
+    }
+    @media (min-width: 768px) {
+      #board-wrap { width: 30vw; }
+    }
+    #board {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      transition: filter 0.3s ease;
+    }
     #task {
-      width: 400px; text-align: center;
+      width: 100%; text-align: center;
       font: bold 18px sans-serif; padding: 6px 0;
     }
+    /* Shared look for the main action buttons (new position + category
+       picker): rounded, a light border, and a subtle hover/active lift so
+       they feel clickable without competing with the navbar. */
+    #new-btn, #category-buttons button {
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    #new-btn:hover, #category-buttons button:hover {
+      background: #3d5872;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+    #new-btn:active, #category-buttons button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
     #new-btn {
-      display: block; margin-top: 10px; width: 400px;
-      padding: 8px; font-size: 15px; cursor: pointer;
+      display: block; margin-top: 10px; width: 100%;
+      padding: 10px; font-size: 15px;
     }
     #category-buttons {
       display: flex; gap: 6px;
-      margin-top: 8px; width: 400px;
+      margin-top: 8px; width: 100%;
     }
     #category-buttons button {
       flex: 1;
-      padding: 8px 4px; font-size: 13px; cursor: pointer;
+      padding: 8px 4px; font-size: 13px;
     }
     #promotion-dialog {
       display: none;
@@ -64,6 +101,7 @@
     }
     #nav-brand { font-weight: bold; }
     #nav-auth { display: flex; align-items: center; gap: 10px; }
+    #nav-score { color: #9fd0ff; font-weight: bold; }
     #nav-auth button {
       padding: 6px 12px; font-size: 14px; cursor: pointer;
     }
@@ -116,6 +154,7 @@
     <span id="nav-brand">Endgamer</span>
     <div id="nav-auth">
       <span id="nav-username" style="display: none;"></span>
+      <span id="nav-score" style="display: none;"></span>
       <button id="nav-logout-btn" style="display: none;">Logout</button>
       <button id="nav-login-btn">Login</button>
     </div>
@@ -141,7 +180,7 @@
   </div>
   <div id="board-wrap" style="position: relative; display: inline-block;">
     <div id="task"></div>
-    <div id="board" style="width: 400px; height: 400px;"></div>
+    <div id="board"></div>
     <button id="new-btn">New position</button>
     <div id="category-buttons">
       <button data-category="pawns_only">Pawns only</button>

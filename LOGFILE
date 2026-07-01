@@ -1,0 +1,70 @@
+Endgame trainer - change log
+=============================
+
+1. Show a success message on checkmate and persist a score for logged-in players.
+   - backend/main.py: the /move endpoint now detects when the player's own
+     move delivers checkmate and returns a `checkmate` flag in the JSON
+     response. When the player is logged in (a `user_id` is present in the
+     session), their score is incremented in the database and the new total
+     is included in the response as `score`.
+   - backend/db.py: added a `score` column to the `users` table (with a
+     migration path for databases created before this column existed), plus
+     an `increment_score(user_id)` helper that awards one point and returns
+     the updated total.
+   - backend/auth.py: `_user_to_dict` now includes `score` so the frontend
+     can display it after login/registration or on `/auth/me`.
+   - frontend/index.js: `onMove` now checks the `checkmate` flag from the
+     `/move` response. When set, the "White/Black to win" text above the
+     board is replaced with a "Checkmate! You win!" message and the board is
+     locked (movable color cleared) so no further moves can be made.
+   - Fix: frontend/index.js's `sendMove()` was missing `credentials: 'include'`
+     on its fetch to `/move`, so the session cookie never reached the
+     backend and `session.get('user_id')` was always empty -- the score was
+     silently never awarded. All other authenticated calls (in auth.js)
+     already sent credentials; `/move` was the one call added without it.
+
+2. Display the logged-in user's score in the nav bar and keep it live; add a
+   background gradient.
+   - frontend/index.html: added a `#nav-score` span next to the username in
+     the nav bar, plus a subtle bluish gradient background on `<body>`.
+   - frontend/auth.js: `renderUser()` now renders `Score: N` alongside the
+     username/email whenever a user is logged in (or hides it when logged
+     out), and tracks the current user in a module-level `currentUser`.
+     Exported a new `updateScore(score)` so other modules can refresh just
+     the score display without a full `/auth/me` round trip.
+   - frontend/index.js: imports `updateScore` from auth.js and calls it with
+     the `score` field from a checkmate-winning `/move` response, so the nav
+     bar updates immediately after a win.
+
+3. Make the board responsive and give the main action buttons a nicer look.
+   - frontend/index.html: `#board-wrap` (and with it the board, the task
+     label, and the "New position"/category buttons, which now size to
+     100% of the wrap instead of a fixed 400px) is 90vw wide by default and
+     switches to 30vw at the "md" breakpoint (min-width: 768px). `#board`
+     uses `aspect-ratio: 1 / 1` so it stays square as the width changes;
+     Chessground 10 watches its container with a `ResizeObserver`, so no JS
+     changes were needed for the board itself to redraw at the new size.
+     `#new-btn` and `#category-buttons button` got a shared dark
+     rounded-corner style with a subtle shadow and hover/active feedback.
+   - Verified with a headless-browser check at 1280px (board rendered at
+     384px, i.e. 30%) and 390px (board rendered at 351px, i.e. 90%).
+
+4. Score a failed attempt with a penalty, and raise the win bonus.
+   - backend/db.py: `increment_score(user_id)` (which always added exactly
+     1) is replaced by `adjust_score(user_id, delta)`, which applies any
+     signed delta and returns the new total. This lets the same helper
+     serve both the win bonus and the failure penalty.
+   - backend/main.py: added `CHECKMATE_BONUS = 100` and
+     `FAILURE_PENALTY = -10`. The checkmate branch of `/move` now awards
+     +100 (was +1). The "not optimal" branch -- reached the instant a
+     player deviates from the winning line, which is already how the
+     frontend flashes the board and ends the attempt -- now also docks a
+     logged-in player -10 and includes the new `score` in the response.
+   - frontend/index.js: `onMove`'s non-optimal branch now calls
+     `updateScore(data.score)` when the response includes a `score`, the
+     same way the checkmate branch already did, so the nav bar reflects the
+     penalty immediately.
+   - Verified against the running backend: registered a test user, played a
+     random (non-optimal) move and confirmed the score dropped from 0 to
+     -10, then played tablebase-best moves to checkmate on a fresh account
+     and confirmed the score rose from 0 to 100.

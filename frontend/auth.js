@@ -1,6 +1,7 @@
 const API_BASE = 'http://localhost:8001';
 
 let mode = 'login';
+let currentUser = null;
 
 // Fetches the currently logged-in user from the backend, or null if nobody is logged in.
 async function fetchMe() {
@@ -9,22 +10,35 @@ async function fetchMe() {
   return data.user;
 }
 
-// Updates the nav bar to show either the logged-in user's name + a logout
-// button, or a login button, depending on whether `user` is present.
+// Updates the nav bar to show either the logged-in user's name + score + a
+// logout button, or a login button, depending on whether `user` is present.
 function renderUser(user) {
+  currentUser = user;
   const usernameEl = document.getElementById('nav-username');
+  const scoreEl = document.getElementById('nav-score');
   const logoutBtn = document.getElementById('nav-logout-btn');
   const loginBtn = document.getElementById('nav-login-btn');
   if (user) {
     usernameEl.textContent = user.name || user.email;
     usernameEl.style.display = '';
+    scoreEl.textContent = `Score: ${user.score}`;
+    scoreEl.style.display = '';
     logoutBtn.style.display = '';
     loginBtn.style.display = 'none';
   } else {
     usernameEl.style.display = 'none';
+    scoreEl.style.display = 'none';
     logoutBtn.style.display = 'none';
     loginBtn.style.display = '';
   }
+}
+
+// Called by index.js whenever a checkmate win reports a new score, so the
+// nav bar stays live without needing a full /auth/me round trip.
+export function updateScore(score) {
+  if (currentUser === null) return;
+  currentUser = { ...currentUser, score };
+  document.getElementById('nav-score').textContent = `Score: ${score}`;
 }
 
 function showModal() {

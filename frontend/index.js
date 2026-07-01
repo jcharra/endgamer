@@ -2,6 +2,7 @@ import { Chessground } from '@lichess-org/chessground';
 import '@lichess-org/chessground/assets/chessground.base.css';
 import '@lichess-org/chessground/assets/chessground.brown.css';
 import '@lichess-org/chessground/assets/chessground.cburnett.css';
+import { updateScore } from './auth.js';
 
 let humanColor = 'white';
 
@@ -21,8 +22,11 @@ async function fetchDests() {
 }
 
 async function sendMove(from, to, promotion = '') {
+  // Session cookie must ride along so the backend knows who's logged in
+  // (needed to credit a score when the move delivers checkmate).
   const res = await fetch('http://localhost:8001/move', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to, promotion }),
   });
@@ -61,10 +65,25 @@ async function onMove(from, to) {
         autoShapes: best ? [{ orig: best.slice(0, 2), dest: best.slice(2, 4), brush: 'yellow' }] : [],
       },
     });
+    if (typeof data.score === 'number') {
+      updateScore(data.score);
+    }
     return;
   }
 
   document.getElementById('board').classList.remove('dark');
+
+  if (data.checkmate) {
+    // Replace the "White/Black to win" task text with a success message and
+    // lock the board so the player can't keep moving pieces after mate.
+    document.getElementById('task').textContent = 'Checkmate! You win!';
+    ground.set({ movable: { color: undefined } });
+    if (typeof data.score === 'number') {
+      updateScore(data.score);
+    }
+    return;
+  }
+
   const next = await fetchDests();
   ground.set({
     fen: next.fen,
