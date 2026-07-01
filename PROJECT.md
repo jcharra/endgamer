@@ -23,4 +23,7 @@ Do not comment every variable, though.
 
 Current task
 ------------
-None. (Last completed: center the board vertically and horizontally.)
+None. (Last completed: email/password auth + Google OAuth backed by SQLite, a top nav bar
+showing the logged-in username or "Login", and a modal for sign in/up. Apple sign-in is
+stubbed only -- it needs a paid Apple Developer account and an HTTPS redirect URI, so
+`/auth/apple/login` just returns a "not configured" error for now.)

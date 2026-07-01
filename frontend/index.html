@@ -16,6 +16,8 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      padding-top: 48px;
+      box-sizing: border-box;
     }
     #board { transition: filter 0.3s ease; }
     #task {
@@ -25,6 +27,14 @@
     #new-btn {
       display: block; margin-top: 10px; width: 400px;
       padding: 8px; font-size: 15px; cursor: pointer;
+    }
+    #category-buttons {
+      display: flex; gap: 6px;
+      margin-top: 8px; width: 400px;
+    }
+    #category-buttons button {
+      flex: 1;
+      padding: 8px 4px; font-size: 13px; cursor: pointer;
     }
     #promotion-dialog {
       display: none;
@@ -44,6 +54,56 @@
       border-radius: 4px; cursor: pointer; color: white; padding: 4px;
     }
     #promotion-dialog button:hover { border-color: white; }
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px;
+      background: #222; color: white;
+      font: 15px sans-serif;
+      z-index: 50;
+    }
+    #nav-brand { font-weight: bold; }
+    #nav-auth { display: flex; align-items: center; gap: 10px; }
+    #nav-auth button {
+      padding: 6px 12px; font-size: 14px; cursor: pointer;
+    }
+    #auth-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    #auth-modal.visible { display: flex; }
+    #auth-modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      width: 300px;
+      position: relative;
+      font: 14px sans-serif;
+    }
+    #auth-modal-close {
+      position: absolute; top: 8px; right: 12px;
+      background: none; border: none; font-size: 20px; cursor: pointer;
+    }
+    #auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    #auth-tabs button {
+      flex: 1; padding: 8px; cursor: pointer;
+      border: 1px solid #ccc; background: #f2f2f2;
+    }
+    #auth-tabs button.active { background: #222; color: white; border-color: #222; }
+    #auth-form { display: flex; flex-direction: column; gap: 8px; }
+    #auth-form input {
+      padding: 8px; font-size: 14px;
+    }
+    #auth-submit-btn { padding: 8px; font-size: 14px; cursor: pointer; margin-top: 4px; }
+    #auth-error { color: #c00; font-size: 13px; min-height: 16px; }
+    #auth-divider { text-align: center; margin: 14px 0 10px; color: #888; font-size: 12px; }
+    #auth-modal-content .oauth-btn {
+      display: block; width: 100%; margin-top: 8px;
+      padding: 8px; font-size: 14px; cursor: pointer;
+    }
     #board.dark cg-board {
       background-color: #1a1a1a !important;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='1' height='1' x='0' y='0' fill='%23333'/%3E%3Crect width='1' height='1' x='2' y='0' fill='%23333'/%3E%3Crect width='1' height='1' x='4' y='0' fill='%23333'/%3E%3Crect width='1' height='1' x='6' y='0' fill='%23333'/%3E%3Crect width='1' height='1' x='1' y='1' fill='%23333'/%3E%3Crect width='1' height='1' x='3' y='1' fill='%23333'/%3E%3Crect width='1' height='1' x='5' y='1' fill='%23333'/%3E%3Crect width='1' height='1' x='7' y='1' fill='%23333'/%3E%3Crect width='1' height='1' x='0' y='2' fill='%23333'/%3E%3Crect width='1' height='1' x='2' y='2' fill='%23333'/%3E%3Crect width='1' height='1' x='4' y='2' fill='%23333'/%3E%3Crect width='1' height='1' x='6' y='2' fill='%23333'/%3E%3Crect width='1' height='1' x='1' y='3' fill='%23333'/%3E%3Crect width='1' height='1' x='3' y='3' fill='%23333'/%3E%3Crect width='1' height='1' x='5' y='3' fill='%23333'/%3E%3Crect width='1' height='1' x='7' y='3' fill='%23333'/%3E%3Crect width='1' height='1' x='0' y='4' fill='%23333'/%3E%3Crect width='1' height='1' x='2' y='4' fill='%23333'/%3E%3Crect width='1' height='1' x='4' y='4' fill='%23333'/%3E%3Crect width='1' height='1' x='6' y='4' fill='%23333'/%3E%3Crect width='1' height='1' x='1' y='5' fill='%23333'/%3E%3Crect width='1' height='1' x='3' y='5' fill='%23333'/%3E%3Crect width='1' height='1' x='5' y='5' fill='%23333'/%3E%3Crect width='1' height='1' x='7' y='5' fill='%23333'/%3E%3Crect width='1' height='1' x='0' y='6' fill='%23333'/%3E%3Crect width='1' height='1' x='2' y='6' fill='%23333'/%3E%3Crect width='1' height='1' x='4' y='6' fill='%23333'/%3E%3Crect width='1' height='1' x='6' y='6' fill='%23333'/%3E%3Crect width='1' height='1' x='1' y='7' fill='%23333'/%3E%3Crect width='1' height='1' x='3' y='7' fill='%23333'/%3E%3Crect width='1' height='1' x='5' y='7' fill='%23333'/%3E%3Crect width='1' height='1' x='7' y='7' fill='%23333'/%3E%3C/svg%3E") !important;
@@ -52,10 +112,43 @@
 </head>
 
 <body>
+  <nav id="navbar">
+    <span id="nav-brand">Endgamer</span>
+    <div id="nav-auth">
+      <span id="nav-username" style="display: none;"></span>
+      <button id="nav-logout-btn" style="display: none;">Logout</button>
+      <button id="nav-login-btn">Login</button>
+    </div>
+  </nav>
+  <div id="auth-modal">
+    <div id="auth-modal-content">
+      <button id="auth-modal-close">&times;</button>
+      <div id="auth-tabs">
+        <button type="button" data-mode="login" class="active">Login</button>
+        <button type="button" data-mode="signup">Sign up</button>
+      </div>
+      <form id="auth-form">
+        <input type="text" id="auth-name" placeholder="Name" style="display: none;">
+        <input type="email" id="auth-email" placeholder="Email" required>
+        <input type="password" id="auth-password" placeholder="Password" required>
+        <div id="auth-error"></div>
+        <button type="submit" id="auth-submit-btn">Login</button>
+      </form>
+      <div id="auth-divider">or continue with</div>
+      <button type="button" id="google-login-btn" class="oauth-btn">Sign in with Google</button>
+      <button type="button" id="apple-login-btn" class="oauth-btn">Sign in with Apple</button>
+    </div>
+  </div>
   <div id="board-wrap" style="position: relative; display: inline-block;">
     <div id="task"></div>
     <div id="board" style="width: 400px; height: 400px;"></div>
     <button id="new-btn">New position</button>
+    <div id="category-buttons">
+      <button data-category="pawns_only">Pawns only</button>
+      <button data-category="3_pieces">3 pieces</button>
+      <button data-category="4_pieces">4 pieces</button>
+      <button data-category="5_pieces">5 pieces</button>
+    </div>
     <div id="promotion-dialog">
       <button data-piece="q">♛</button>
       <button data-piece="r">♜</button>
@@ -63,6 +156,7 @@
       <button data-piece="n">♞</button>
     </div>
   </div>
+  <script type="module" src="/auth.js"></script>
   <script type="module" src="/index.js"></script>
 </body>
 

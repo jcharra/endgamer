@@ -89,9 +89,26 @@ async function loadPosition(posData = null) {
   });
 }
 
-document.getElementById('new-btn').addEventListener('click', async () => {
-  const res = await fetch('http://localhost:8001/new');
-  await loadPosition(await res.json());
+// Requests a fresh position from the backend, optionally restricted to a
+// single material category (e.g. "pawns_only", "3_pieces"). Used by both
+// the plain "New position" button and the category-picking buttons.
+async function requestNewPosition(category = null) {
+  const url = category
+    ? `http://localhost:8001/new?category=${encodeURIComponent(category)}`
+    : 'http://localhost:8001/new';
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+  await loadPosition(data);
+}
+
+document.getElementById('new-btn').addEventListener('click', () => requestNewPosition());
+
+document.querySelectorAll('#category-buttons button').forEach((btn) => {
+  btn.addEventListener('click', () => requestNewPosition(btn.dataset.category));
 });
 
 const { fen: initialFen, task: initialTask } = await fetchPosition();

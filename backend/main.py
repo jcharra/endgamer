@@ -1,3 +1,4 @@
+import os
 import chess
 import urllib.request
 import urllib.parse
@@ -5,10 +6,26 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+from auth import auth_bp, oauth, register_google_oauth
+from db import init_db
 from endgameprovider import get_random_endgame
 
 app = Flask(__name__)
-CORS(app)
+
+# Signed-cookie session secret. Set FLASK_SECRET_KEY in production -- the
+# fallback here is only fine for local development.
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-me')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Wildcard CORS can't be combined with cookies, so the auth flow needs the
+# frontend's actual origin(s) listed explicitly and supports_credentials on.
+frontend_origins = os.environ.get('FRONTEND_ORIGINS', 'http://localhost:5174,http://localhost').split(',')
+CORS(app, supports_credentials=True, origins=frontend_origins)
+
+init_db()
+oauth.init_app(app)
+register_google_oauth()
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 
 def query_tablebase(b):
@@ -49,10 +66,17 @@ POSITION_TASK = position_task(POSITION_FEN)
 
 @app.route('/new', methods=['GET'])
 def new():
+    # An optional ?category=... query parameter lets the frontend's
+    # category buttons restrict the draw to a specific material bucket
+    # (e.g. "pawns_only", "3_pieces") instead of the full combined pool.
     global BOARD, POSITION_FEN, HUMAN_COLOR, POSITION_TASK
+    category = request.args.get('category')
     outcome = -1
     for _ in range(10):
-        POSITION_FEN = get_random_endgame()
+        try:
+            POSITION_FEN = get_random_endgame(category)
+        except (KeyError, IndexError):
+            return jsonify({'error': f'No positions available for category "{category}"'}), 400
         outcome = get_outcome(POSITION_FEN)
         if outcome is not None and outcome >= 0:
             break
