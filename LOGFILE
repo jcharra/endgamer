@@ -68,3 +68,58 @@ Endgame trainer - change log
      random (non-optimal) move and confirmed the score dropped from 0 to
      -10, then played tablebase-best moves to checkmate on a fresh account
      and confirmed the score rose from 0 to 100.
+
+5. Clamp score at 0, restyle the score badge, and add a retry button on failure.
+   - backend/db.py: `adjust_score(user_id, delta)` now applies the delta and
+     clamps the result to a minimum of 0 in the same SQL statement (`MAX(0,
+     score + ?)`), so a losing streak can no longer push a player's score
+     negative.
+   - frontend/index.html: `#nav-score` is now a gold pill badge (gradient
+     background, rounded, drop shadow) instead of plain text styling.
+   - frontend/auth.js: `renderUser()` and `updateScore()` now render the
+     score as a trophy icon followed by the number (e.g. "🏆 N") instead
+     of the previous `Score: N` label.
+   - frontend/index.html / frontend/index.js: added a `#retry-btn` next to
+     `#new-btn`, hidden by default and styled in red so it reads as a
+     "try again" action distinct from the neutral "New position" button.
+     `onMove`'s non-optimal branch now shows it; clicking it calls
+     `loadPosition()` with no arguments, which re-fetches `/position` --
+     the backend's `get_position` handler already resets the live board to
+     the puzzle's original FEN on every call -- so the player retries the
+     exact same puzzle instead of getting a new one. `loadPosition()` also
+     hides the button again on every successful load (new position, retry,
+     or initial page load).
+   - Verified against the running backend and a headless-browser session:
+     confirmed repeated failed moves hold the score at 0 rather than going
+     negative, the nav badge renders as a gold "🏆 0" pill, the
+     retry button appears (red) after a failed move alongside the darkened
+     board, and clicking it clears the dark overlay, hides the button, and
+     resets the board to the puzzle's starting position.
+
+6. Fix the backend Docker image failing to start with "ModuleNotFoundError:
+   No module named 'auth'".
+   - backend/Dockerfile: was only `COPY main.py .`, so the container never
+     had auth.py, db.py, endgameprovider.py, or the data/ directory of FEN
+     files that main.py (transitively) imports/reads. Changed to `COPY . .`
+     so the whole backend directory (minus what .dockerignore excludes)
+     ships with the image.
+   - backend/.dockerignore: added `data/app.db` to the exclusion list now
+     that `COPY . .` would otherwise bake the local dev database (with test
+     accounts) into the image; the app creates it fresh via `init_db()` on
+     first run regardless.
+   - backend/requirements.txt: while verifying the fix by actually building
+     and running the image, hit a second, unrelated failure -- the
+     container exited immediately with no output (exit code 132, SIGILL).
+     Bisected it to `cryptography` (a transitive dependency pulled in
+     unpinned via Authlib -> joserfc): versions 45.0.1 and 46.0.0 import
+     cleanly, but 47.0.0 and 48.0.0 (and the 49.0.0 that pip had been
+     resolving to) crash on `from cryptography.hazmat.primitives.asymmetric
+     import rsa` under this machine's Docker Desktop ARM64 runtime, most
+     likely a CPU-crypto-feature-detection bug in cryptography's Rust
+     extension under virtualization. Pinned `cryptography==46.0.0`
+     explicitly (joserfc requires >=45.0.1, so this is the newest version
+     both requirements agree on and the newest confirmed-working one).
+   - Verified by building the image fresh (`docker build ./backend`) and
+     running it standalone (`docker run -p 8002:8001 ...`): the container
+     now stays up and `curl localhost:8002/position` returns a real FEN,
+     instead of the container crashing before Flask could even start.

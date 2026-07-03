@@ -28,5 +28,6 @@ Give an incremental change number and description.
 
 Current task
 ------------
-None. (Last completed: -10 score penalty on a failed/non-optimal move, and
-raised the checkmate bonus from +1 to +100.)
+Score should never drop below 0.
+Score badge should look a little nicer and not contain the word "score", but rather an icon like a golden cup.
+On failure, a "retry" button should appear, allowing to restart the puzzle.

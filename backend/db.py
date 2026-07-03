@@ -80,9 +80,15 @@ def adjust_score(user_id, delta):
     """Apply `delta` (positive or negative) to the given user's score and
     return their new total. Used both for the checkmate bonus and the
     deviation penalty.
+
+    The score is clamped to a minimum of 0 in the same statement (via
+    MAX), so a string of penalties can never push a player negative.
     """
     with get_connection() as conn:
-        conn.execute("UPDATE users SET score = score + ? WHERE id = ?", (delta, user_id))
+        conn.execute(
+            "UPDATE users SET score = MAX(0, score + ?) WHERE id = ?",
+            (delta, user_id),
+        )
     return find_user_by_id(user_id)["score"]
 
 

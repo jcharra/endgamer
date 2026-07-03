@@ -21,7 +21,7 @@ function renderUser(user) {
   if (user) {
     usernameEl.textContent = user.name || user.email;
     usernameEl.style.display = '';
-    scoreEl.textContent = `Score: ${user.score}`;
+    scoreEl.textContent = `🏆 ${user.score}`;
     scoreEl.style.display = '';
     logoutBtn.style.display = '';
     loginBtn.style.display = 'none';
@@ -38,7 +38,7 @@ function renderUser(user) {
 export function updateScore(score) {
   if (currentUser === null) return;
   currentUser = { ...currentUser, score };
-  document.getElementById('nav-score').textContent = `Score: ${score}`;
+  document.getElementById('nav-score').textContent = `🏆 ${score}`;
 }
 
 function showModal() {

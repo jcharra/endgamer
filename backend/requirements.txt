@@ -3,3 +3,8 @@ Flask==3.1.3
 flask-cors==6.0.2
 Authlib==1.7.2
 requests==2.32.5
+# Authlib pulls this in transitively (via joserfc) unpinned. 47.0.0+ crashes
+# with "Illegal instruction" on import under some ARM64 container runtimes
+# (its Rust extension appears to misdetect CPU crypto features there);
+# 46.0.0 is the newest version confirmed to import cleanly.
+cryptography==46.0.0

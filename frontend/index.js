@@ -68,6 +68,9 @@ async function onMove(from, to) {
     if (typeof data.score === 'number') {
       updateScore(data.score);
     }
+    // Let the player restart the same puzzle from scratch instead of
+    // having to fetch a whole new position after a failed attempt.
+    document.getElementById('retry-btn').classList.add('visible');
     return;
   }
 
@@ -99,6 +102,7 @@ async function loadPosition(posData = null) {
   humanColor = fenColor(fen);
   const { dests } = await fetchDests();
   document.getElementById('board').classList.remove('dark');
+  document.getElementById('retry-btn').classList.remove('visible');
   ground.set({
     fen,
     orientation: humanColor,
@@ -125,6 +129,11 @@ async function requestNewPosition(category = null) {
 }
 
 document.getElementById('new-btn').addEventListener('click', () => requestNewPosition());
+
+// Retry re-fetches /position, which resets the backend's live board back to
+// the puzzle's starting FEN (see get_position in main.py), so the player
+// gets another crack at the same puzzle rather than a brand new one.
+document.getElementById('retry-btn').addEventListener('click', () => loadPosition());
 
 document.querySelectorAll('#category-buttons button').forEach((btn) => {
   btn.addEventListener('click', () => requestNewPosition(btn.dataset.category));

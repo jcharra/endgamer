@@ -44,7 +44,7 @@
     /* Shared look for the main action buttons (new position + category
        picker): rounded, a light border, and a subtle hover/active lift so
        they feel clickable without competing with the navbar. */
-    #new-btn, #category-buttons button {
+    #new-btn, #retry-btn, #category-buttons button {
       background: #2c3e50;
       color: white;
       border: none;
@@ -53,18 +53,26 @@
       transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
-    #new-btn:hover, #category-buttons button:hover {
+    #new-btn:hover, #retry-btn:hover, #category-buttons button:hover {
       background: #3d5872;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
-    #new-btn:active, #category-buttons button:active {
+    #new-btn:active, #retry-btn:active, #category-buttons button:active {
       transform: translateY(1px);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    #new-btn {
+    #new-btn, #retry-btn {
       display: block; margin-top: 10px; width: 100%;
       padding: 10px; font-size: 15px;
     }
+    /* Retry appears only after a failed attempt, in a red tone that reads
+       as "try again" rather than the neutral "New position" action. */
+    #retry-btn {
+      display: none;
+      background: #a83232;
+    }
+    #retry-btn:hover { background: #c23c3c; }
+    #retry-btn.visible { display: block; }
     #category-buttons {
       display: flex; gap: 6px;
       margin-top: 8px; width: 100%;
@@ -101,7 +109,18 @@
     }
     #nav-brand { font-weight: bold; }
     #nav-auth { display: flex; align-items: center; gap: 10px; }
-    #nav-score { color: #9fd0ff; font-weight: bold; }
+    /* Score badge: a gold pill with a trophy icon, rather than the plain
+       "Score: N" text label it replaces. */
+    #nav-score {
+      display: inline-block;
+      background: linear-gradient(135deg, #ffe9a8, #f2b705);
+      color: #5c3d00;
+      font-weight: bold;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
     #nav-auth button {
       padding: 6px 12px; font-size: 14px; cursor: pointer;
     }
@@ -182,6 +201,7 @@
     <div id="task"></div>
     <div id="board"></div>
     <button id="new-btn">New position</button>
+    <button id="retry-btn">Retry</button>
     <div id="category-buttons">
       <button data-category="pawns_only">Pawns only</button>
       <button data-category="3_pieces">3 pieces</button>
